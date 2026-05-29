@@ -148,13 +148,25 @@
     return fetch('/api/upload/signature')
       .then(function (r) { return r.json(); })
       .then(function (sig) {
+        var targetCloud = sig.cloudName;
+
+        console.log("🚀 SUBMITTING TO CLOUDINARY TARGET URL:", 'https://api.cloudinary.com/v1_1/' + targetCloud + '/auto/upload');
+        console.log("📡 Cloud Name from backend:", targetCloud);
+        console.log("🔑 API Key from backend:", sig.apiKey ? 'Present (length: ' + sig.apiKey.length + ')' : 'MISSING');
+
+        if (!targetCloud || targetCloud === 'undefined' || targetCloud === 'null') {
+          console.error("❌ CRITICAL: The cloud name variable evaluated to a literal undefined string.");
+          throw new Error('Cloud name is missing from server configuration. Check CLOUDINARY_CLOUD_NAME environment variable.');
+        }
+
         var fd = new FormData();
         fd.append('file', file);
         fd.append('api_key', sig.apiKey);
         fd.append('timestamp', sig.timestamp);
         fd.append('signature', sig.signature);
         if (sig.uploadPreset) fd.append('upload_preset', sig.uploadPreset);
-        return fetch('https://api.cloudinary.com/v1_1/' + sig.cloudName + '/auto/upload', {
+
+        return fetch('https://api.cloudinary.com/v1_1/' + targetCloud + '/auto/upload', {
           method: 'POST',
           body: fd,
         });
