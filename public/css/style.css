@@ -1451,6 +1451,41 @@ body.about-page {
   animation: fadeIn 300ms var(--ease);
 }
 
+.source-toggle {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.source-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.source-option:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.source-option input {
+  accent-color: var(--accent);
+}
+
+.source-label {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
 .empty-msg {
   text-align: center;
   padding: 48px 24px;

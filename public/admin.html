@@ -61,8 +61,25 @@
           </select>
         </div>
         <div class="form-group">
-          <label for="mediaUrl">Paste Hosted Media URL (e.g., ImgBB direct link, Vimeo URL, or YouTube link)</label>
-          <input type="text" id="mediaUrl" name="mediaUrl" placeholder="https://..." required>
+          <label>Source Type</label>
+          <div class="source-toggle">
+            <label class="source-option">
+              <input type="radio" name="sourceType" value="cloudinary" checked>
+              <span class="source-label">Direct File Upload (Cloudinary)</span>
+            </label>
+            <label class="source-option">
+              <input type="radio" name="sourceType" value="youtube">
+              <span class="source-label">Video Link (YouTube)</span>
+            </label>
+          </div>
+        </div>
+        <div class="form-group" id="cloudinary-group">
+          <label for="file">Select File</label>
+          <input type="file" id="file" name="file" accept="image/*,video/*">
+        </div>
+        <div class="form-group" id="youtube-group" style="display:none">
+          <label for="youtubeUrl">Paste YouTube Video URL or Embed Link</label>
+          <input type="text" id="youtubeUrl" placeholder="https://youtube.com/watch?v=...">
         </div>
         <button type="submit" class="btn-primary">Upload</button>
       </form>

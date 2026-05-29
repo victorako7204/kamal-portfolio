@@ -10,6 +10,10 @@
   var mediaTbody = document.getElementById('media-tbody');
   var inquiriesTbody = document.getElementById('inquiries-tbody');
 
+  var sourceRadios = document.querySelectorAll('input[name="sourceType"]');
+  var cloudinaryGroup = document.getElementById('cloudinary-group');
+  var youtubeGroup = document.getElementById('youtube-group');
+
   function showLogin() {
     loginGate.style.display = 'flex';
     adminPanel.style.display = 'none';
@@ -86,15 +90,19 @@
       return;
     }
     mediaTbody.innerHTML = items.map(function (item) {
-      var isMotion = item.category === 'motion';
-      var previewHtml = isMotion
-        ? '<div class="table-preview video-preview" style="background:#111;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.7rem">Motion</div>'
-        : '<img src="' + item.mediaUrl + '" alt="" style="width:56px;height:40px;object-fit:cover">';
+      var previewHtml;
+      if (item.sourceType === 'youtube') {
+        previewHtml = '<div class="table-preview video-preview" style="background:#111;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.7rem">YT</div>';
+      } else if (item.category === 'graphic') {
+        previewHtml = '<img src="' + item.mediaUrl + '" alt="" style="width:56px;height:40px;object-fit:cover">';
+      } else {
+        previewHtml = '<div class="table-preview video-preview" style="background:#111;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.7rem">Cloud</div>';
+      }
       return '<tr>' +
         '<td>' + previewHtml + '</td>' +
         '<td>' + esc(item.title) + '</td>' +
         '<td><span class="category-badge ' + item.category + '">' + (item.category === 'motion' ? 'Motion Graphics' : 'Graphic Design') + '</span></td>' +
-        '<td>' + (isMotion ? 'video' : 'image') + '</td>' +
+        '<td>' + item.sourceType + '</td>' +
         '<td><button class="btn-delete" data-id="' + item._id + '">Delete</button></td>' +
       '</tr>';
     }).join('');
@@ -111,35 +119,115 @@
       .catch(function () { showUploadStatus('Failed to delete.', 'error'); });
   }
 
+  /* ---- Source type toggle ---- */
+  sourceRadios.forEach(function (radio) {
+    radio.addEventListener('change', function () {
+      if (this.value === 'cloudinary') {
+        cloudinaryGroup.style.display = '';
+        youtubeGroup.style.display = 'none';
+      } else {
+        cloudinaryGroup.style.display = 'none';
+        youtubeGroup.style.display = '';
+      }
+    });
+  });
+
+  /* ---- Upload lifecycle ---- */
+  function postToServer(payload) {
+    return fetch('/api/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }).then(function (r) {
+      if (!r.ok) return r.json().then(function (e) { throw new Error(e.error || 'Upload failed'); });
+      return r.json();
+    });
+  }
+
+  function uploadToCloudinary(file) {
+    return fetch('/api/upload/signature')
+      .then(function (r) { return r.json(); })
+      .then(function (sig) {
+        var fd = new FormData();
+        fd.append('file', file);
+        fd.append('api_key', sig.apiKey);
+        fd.append('timestamp', sig.timestamp);
+        fd.append('signature', sig.signature);
+        if (sig.uploadPreset) fd.append('upload_preset', sig.uploadPreset);
+        return fetch('https://api.cloudinary.com/v1_1/' + sig.cloudName + '/auto/upload', {
+          method: 'POST',
+          body: fd,
+        });
+      })
+      .then(function (r) {
+        if (!r.ok) return r.json().then(function (e) { throw new Error(e.error.message || 'Cloudinary upload failed'); });
+        return r.json();
+      });
+  }
+
   uploadForm.addEventListener('submit', function (e) {
     e.preventDefault();
 
     var btn = uploadForm.querySelector('.btn-primary');
     btn.disabled = true;
-    btn.textContent = 'Publishing...';
     uploadStatus.className = 'status-msg';
     uploadStatus.style.display = 'none';
 
-    var data = JSON.stringify({
-      title: document.getElementById('title').value,
-      description: document.getElementById('description').value,
-      category: document.getElementById('category').value,
-      mediaUrl: document.getElementById('mediaUrl').value,
-    });
+    var title = document.getElementById('title').value;
+    var description = document.getElementById('description').value;
+    var category = document.getElementById('category').value;
+    var sourceType = document.querySelector('input[name="sourceType"]:checked').value;
 
-    fetch('/api/upload', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: data,
-    })
-      .then(function (r) {
-        if (!r.ok) return r.json().then(function (e) { throw new Error(e.error || 'Upload failed'); });
-        uploadForm.reset();
-        showUploadStatus('Published successfully!', 'success');
-        loadMedia();
-      })
-      .catch(function (err) { showUploadStatus(err.message, 'error'); })
-      .finally(function () { btn.disabled = false; btn.textContent = 'Upload'; });
+    if (sourceType === 'youtube') {
+      btn.textContent = 'Publishing...';
+      var youtubeUrl = document.getElementById('youtubeUrl').value;
+      if (!youtubeUrl) {
+        showUploadStatus('Please paste a YouTube URL.', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Upload';
+        return;
+      }
+      postToServer({ title: title, description: description, category: category, sourceType: 'youtube', mediaUrl: youtubeUrl })
+        .then(function () {
+          uploadForm.reset();
+          cloudinaryGroup.style.display = '';
+          youtubeGroup.style.display = 'none';
+          showUploadStatus('Published successfully!', 'success');
+          loadMedia();
+        })
+        .catch(function (err) { showUploadStatus(err.message, 'error'); })
+        .finally(function () { btn.disabled = false; btn.textContent = 'Upload'; });
+    } else {
+      var fileInput = document.getElementById('file');
+      if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+        showUploadStatus('Please select a file to upload.', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Upload';
+        return;
+      }
+      btn.textContent = 'Uploading to Cloudinary...';
+      uploadToCloudinary(fileInput.files[0])
+        .then(function (cldResult) {
+          btn.textContent = 'Saving to gallery...';
+          return postToServer({
+            title: title,
+            description: description,
+            category: category,
+            sourceType: 'cloudinary',
+            mediaUrl: cldResult.secure_url,
+            cloudinaryPublicId: cldResult.public_id,
+          });
+        })
+        .then(function () {
+          uploadForm.reset();
+          cloudinaryGroup.style.display = '';
+          youtubeGroup.style.display = 'none';
+          showUploadStatus('Published successfully!', 'success');
+          loadMedia();
+        })
+        .catch(function (err) { showUploadStatus(err.message, 'error'); })
+        .finally(function () { btn.disabled = false; btn.textContent = 'Upload'; });
+    }
   });
 
   function loadInquiries() {

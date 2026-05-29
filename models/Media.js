@@ -19,10 +19,19 @@ const mediaSchema = new mongoose.Schema({
       message: 'Category must be either "motion" or "graphic"',
     },
   },
+  sourceType: {
+    type: String,
+    enum: ['cloudinary', 'youtube'],
+    required: true,
+  },
   mediaUrl: {
     type: String,
     required: [true, 'Media URL is required'],
     trim: true,
+  },
+  cloudinaryPublicId: {
+    type: String,
+    default: null,
   },
   isDeleted: {
     type: Boolean,
@@ -32,8 +41,10 @@ const mediaSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
-}, {
-  timestamps: true,
+  uploadDate: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 mediaSchema.index({ deletedAt: 1 }, { expireAfterSeconds: 432000 });

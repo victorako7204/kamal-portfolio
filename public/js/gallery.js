@@ -60,6 +60,16 @@
     }
   });
 
+  /* ---- Helpers ---- */
+  function getYoutubeEmbedUrl(url) {
+    var match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    return match ? 'https://www.youtube.com/embed/' + match[1] + '?autoplay=1&rel=0' : null;
+  }
+
+  function cloudinaryTransform(url) {
+    return url ? url.replace(/\/upload\//, '/upload/f_auto,q_auto/') : url;
+  }
+
   /* ---- Load & render gallery ---- */
   async function loadGallery() {
     try {
@@ -73,26 +83,21 @@
     }
   }
 
-  function getEmbedUrl(url) {
-    var ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-    if (ytMatch) return 'https://www.youtube.com/embed/' + ytMatch[1] + '?autoplay=1&rel=0';
-
-    var vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
-    if (vimeoMatch) return 'https://player.vimeo.com/video/' + vimeoMatch[1] + '?autoplay=1';
-
-    return null;
-  }
-
   function renderMotion(items) {
     if (!items.length) {
       motionGrid.innerHTML = '<p class="empty-msg">New collection dropping soon</p>';
       return;
     }
     motionGrid.innerHTML = items.map(item => {
-      var embed = getEmbedUrl(item.mediaUrl);
-      var playerHtml = embed
-        ? '<iframe src="' + embed + '" frameborder="0" allow="autoplay; fullscreen" allowfullscreen style="width:100%;aspect-ratio:16/9;display:block"></iframe>'
-        : '<video src="' + item.mediaUrl + '" muted loop preload="metadata" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:#000"></video>';
+      var playerHtml;
+      if (item.sourceType === 'youtube') {
+        var embed = getYoutubeEmbedUrl(item.mediaUrl);
+        playerHtml = embed
+          ? '<iframe src="' + embed + '" frameborder="0" allow="autoplay; fullscreen" allowfullscreen style="width:100%;aspect-ratio:16/9;display:block"></iframe>'
+          : '<video src="' + item.mediaUrl + '" muted loop preload="metadata" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:#000"></video>';
+      } else {
+        playerHtml = '<video src="' + item.mediaUrl + '" muted playsinline loop autoplay preload="metadata" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:#000"></video>';
+      }
       return '<div class="video-card" data-id="' + item._id + '">' +
         '<div class="video-wrapper">' + playerHtml + '</div>' +
         '<div class="card-body">' +
@@ -112,15 +117,16 @@
       graphicGrid.innerHTML = '<p class="empty-msg">New collection dropping soon</p>';
       return;
     }
-    graphicGrid.innerHTML = items.map(item => `
-      <div class="masonry-item" data-id="${item._id}">
-        <img src="${item.mediaUrl}" alt="${escapeHtml(item.title)}" loading="lazy">
-        <div class="card-body">
-          <h3>${escapeHtml(item.title)}</h3>
-          ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}
-        </div>
-      </div>
-    `).join('');
+    graphicGrid.innerHTML = items.map(item => {
+      var src = item.sourceType === 'cloudinary' ? cloudinaryTransform(item.mediaUrl) : item.mediaUrl;
+      return '<div class="masonry-item" data-id="' + item._id + '">' +
+        '<img src="' + src + '" alt="' + escapeHtml(item.title) + '" loading="lazy">' +
+        '<div class="card-body">' +
+          '<h3>' + escapeHtml(item.title) + '</h3>' +
+          (item.description ? '<p>' + escapeHtml(item.description) + '</p>' : '') +
+        '</div>' +
+      '</div>';
+    }).join('');
 
     graphicGrid.querySelectorAll('.masonry-item').forEach(el => {
       el.addEventListener('click', () => openLightbox(el.dataset.id));
@@ -130,9 +136,13 @@
   function openVideoModal(id) {
     const item = allMedia.find(m => m._id === id);
     if (!item) return;
-    var embed = getEmbedUrl(item.mediaUrl);
-    if (embed) {
-      modalPlayer.innerHTML = '<iframe src="' + embed + '" frameborder="0" allow="autoplay; fullscreen" allowfullscreen style="width:100%;aspect-ratio:16/9;display:block;background:#000"></iframe>';
+    if (item.sourceType === 'youtube') {
+      var embed = getYoutubeEmbedUrl(item.mediaUrl);
+      if (embed) {
+        modalPlayer.innerHTML = '<iframe src="' + embed + '" frameborder="0" allow="autoplay; fullscreen" allowfullscreen style="width:100%;aspect-ratio:16/9;display:block;background:#000"></iframe>';
+      } else {
+        modalPlayer.innerHTML = '<video src="' + item.mediaUrl + '" controls autoplay style="width:100%;max-height:68vh;display:block;background:#000"></video>';
+      }
     } else {
       modalPlayer.innerHTML = '<video src="' + item.mediaUrl + '" controls autoplay style="width:100%;max-height:68vh;display:block;background:#000"></video>';
     }
@@ -144,7 +154,8 @@
   function openLightbox(id) {
     const item = allMedia.find(m => m._id === id);
     if (!item) return;
-    lightboxImg.src = item.mediaUrl;
+    var src = item.sourceType === 'cloudinary' ? cloudinaryTransform(item.mediaUrl) : item.mediaUrl;
+    lightboxImg.src = src;
     lightboxImg.alt = item.title;
     lightboxTitle.textContent = item.title;
     lightboxDesc.textContent = item.description || '';
