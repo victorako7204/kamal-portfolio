@@ -6,22 +6,33 @@ const Media = require('../models/Media');
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
+  api_key: String(process.env.CLOUDINARY_API_KEY).trim(),
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+console.log("📡 Cloudinary Config Status:", {
+  name: cloudinary.config().cloud_name ? "LOADED" : "MISSING",
+  keyLength: cloudinary.config().api_key ? cloudinary.config().api_key.length : 0,
+});
+
 router.get('/signature', (req, res) => {
-  const timestamp = Math.round(Date.now() / 1000);
-  const signature = cloudinary.utils.api_sign_request(
-    { timestamp, upload_preset: process.env.CLOUDINARY_UPLOAD_PRESET || undefined },
-    process.env.CLOUDINARY_API_SECRET
-  );
-  res.json({
-    signature,
-    timestamp,
-    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
-    apiKey: process.env.CLOUDINARY_API_KEY,
-  });
+  try {
+    const timestamp = Math.round(new Date().getTime() / 1000);
+    const signature = cloudinary.utils.api_sign_request(
+      { timestamp },
+      process.env.CLOUDINARY_API_SECRET
+    );
+    return res.status(200).json({
+      success: true,
+      timestamp,
+      signature,
+      apiKey: String(process.env.CLOUDINARY_API_KEY).trim(),
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+      uploadPreset: process.env.CLOUDINARY_UPLOAD_PRESET || null,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 router.post('/', async (req, res) => {
