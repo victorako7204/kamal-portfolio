@@ -20,11 +20,10 @@ router.post('/login', (req, res) => {
   const token = generateToken();
   sessions.set(token, { createdAt: Date.now() });
 
-  const isVercel = process.env.VERCEL === '1';
   res.cookie('session', token, {
     httpOnly: true,
-    secure: isVercel,
-    sameSite: isVercel ? 'none' : 'lax',
+    secure: true,
+    sameSite: 'none',
     path: '/',
     maxAge: 24 * 60 * 60 * 1000,
   });

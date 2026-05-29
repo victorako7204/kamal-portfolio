@@ -152,17 +152,14 @@
         return r.json();
       })
       .then(function (data) {
-        var cloudName = data.cloudName || 'dijpupljz';
-        var apiKey = data.apiKey || '416492239689254';
+        const cloudName = "dijpupljz";
+        const apiKey = "416492239689254";
         var signature = data.signature;
         var timestamp = data.timestamp;
 
-        console.log("🚀 INTERCEPTED TARGET URL:", 'https://api.cloudinary.com/v1_1/' + cloudName + '/auto/upload');
-
-        if (!cloudName || cloudName === 'undefined' || cloudName === 'null') {
-          console.error("❌ CRITICAL: The cloud name variable evaluated to a literal undefined string.");
-          throw new Error('Cloud name is missing from server configuration.');
-        }
+        console.log("🚀 CLOUDINARY UPLOAD TARGET:", 'https://api.cloudinary.com/v1_1/' + cloudName + '/auto/upload');
+        console.log("📡 Cloud Name:", cloudName);
+        console.log("🔑 API Key:", apiKey);
 
         var formData = new FormData();
         formData.append('file', file);

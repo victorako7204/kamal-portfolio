@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 5000;
 
 const isVercel = process.env.VERCEL === '1';
 app.use(cors({
-  origin: isVercel ? process.env.VERCEL_URL || true : true,
+  origin: (origin, callback) => callback(null, true),
   credentials: true,
 }));
 app.use((req, res, next) => {

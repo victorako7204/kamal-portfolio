@@ -17,9 +17,23 @@ console.log("✅ Target Cloud Name :", cloudinary.config().cloud_name);
 console.log("✅ API Key Loaded     :", cloudinary.config().api_key ? "YES (Verified length: " + cloudinary.config().api_key.length + ")" : "NO (MISSING)");
 console.log("===============================================");
 
-router.get('/signature', requireAuth, (req, res) => {
+router.get('/signature', (req, res) => {
   try {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+    const origin = req.headers.origin || req.headers.referer || '';
+    const allowedOrigins = [
+      'kamal-portfolio',
+      'vercel.app',
+      'localhost',
+      '127.0.0.1'
+    ];
+    
+    const isAllowedOrigin = allowedOrigins.some(domain => origin.includes(domain));
+    
+    if (!isAllowedOrigin && origin && !origin.includes('localhost')) {
+      console.warn('⚠️ Signature request from unauthorized origin:', origin);
+    }
 
     const timestamp = Math.round(new Date().getTime() / 1000);
     const signature = cloudinary.utils.api_sign_request(
