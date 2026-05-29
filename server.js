@@ -44,7 +44,10 @@ app.get('/{*path}', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-mongoose.connect(process.env.MONGODB_URI)
+module.exports = app;
+
+if (process.env.VERCEL !== '1') {
+  mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
     console.log('Connected to MongoDB');
     app.listen(PORT, () => {
@@ -55,3 +58,4 @@ mongoose.connect(process.env.MONGODB_URI)
     console.error('MongoDB connection error:', err.message);
     process.exit(1);
   });
+}
