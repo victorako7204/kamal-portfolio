@@ -157,9 +157,7 @@
         var signature = data.signature;
         var timestamp = data.timestamp;
 
-        console.log("🚀 CLOUDINARY UPLOAD TARGET:", 'https://api.cloudinary.com/v1_1/' + cloudName + '/auto/upload');
-        console.log("📡 Cloud Name:", cloudName);
-        console.log("🔑 API Key:", apiKey);
+        console.log("🔄 Initiating secure cloud asset transmission stream...");
 
         var formData = new FormData();
         formData.append('file', file);
@@ -250,7 +248,7 @@
         if (!r.ok) throw new Error('Unauthorized');
         return r.json();
       })
-      .then(function (data) { renderInquiries(data); })
+      .then(function (data) { renderInquiries(data.data || data); })
       .catch(function () {
         if (inquiriesTbody) inquiriesTbody.innerHTML = '<tr><td colspan="7" class="empty-msg">Failed to load inquiries.</td></tr>';
       });

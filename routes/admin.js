@@ -47,11 +47,10 @@ router.get('/me', requireAuth, (req, res) => {
 router.get('/inquiries', requireAuth, async (req, res) => {
   try {
     await connectDB();
-    const inquiries = await Inquiry.find({}, { briefData: 0 }).sort({ submissionDate: -1 });
-    res.json(inquiries);
+    const inquiries = await Inquiry.find({}).sort({ createdAt: -1 });
+    return res.status(200).json({ success: true, data: inquiries || [] });
   } catch (error) {
-    console.error("💥 Inquiries route error:", error.message);
-    res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({ success: false, message: "Database read failure", error: error.message });
   }
 });
 
