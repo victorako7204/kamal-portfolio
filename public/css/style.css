@@ -1568,6 +1568,27 @@ body.contact-page {
   margin-right: auto;
 }
 
+.contact-email {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 12px 28px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--accent);
+  text-decoration: none;
+  border: 1px solid var(--accent);
+  border-radius: 100px;
+  transition: var(--transition);
+  letter-spacing: 0.02em;
+}
+
+.contact-email:hover {
+  background: var(--accent);
+  color: var(--bg-primary);
+  box-shadow: 0 0 24px var(--accent-glow);
+  transform: translateY(-2px);
+}
+
 .contact-main {
   flex: 1;
   max-width: 640px;
@@ -1870,6 +1891,22 @@ body.contact-page {
 .footer-copy {
   font-size: 0.8rem;
   color: var(--text-muted);
+}
+
+.footer-email {
+  display: inline-block;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--accent);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  transition: var(--transition-fast);
+}
+
+.footer-email:hover {
+  color: var(--text-primary);
+  text-shadow: 0 0 12px var(--accent-glow);
 }
 
 /* ===== Empty state ===== */
