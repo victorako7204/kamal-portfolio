@@ -9,12 +9,13 @@ cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: String(process.env.CLOUDINARY_API_KEY).trim(),
   api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
 });
 
-console.log("📡 Cloudinary Config Status:", {
-  name: cloudinary.config().cloud_name ? "LOADED" : "MISSING",
-  keyLength: cloudinary.config().api_key ? cloudinary.config().api_key.length : 0,
-});
+console.log("=== 📡 CLOUDINARY CONFIGURATION DIAGNOSTICS ===");
+console.log("✅ Target Cloud Name :", cloudinary.config().cloud_name);
+console.log("✅ API Key Loaded     :", cloudinary.config().api_key ? "YES (Verified length: " + cloudinary.config().api_key.length + ")" : "NO (MISSING)");
+console.log("===============================================");
 
 router.get('/signature', requireAuth, (req, res) => {
   try {
