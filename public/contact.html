@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact &mdash; Kamal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="contact-page">
+
+  <nav class="navbar scrolled" id="navbar">
+    <div class="nav-inner">
+      <a href="/" class="logo">Kamal</a>
+      <div class="nav-links">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/work" class="nav-link">Work</a>
+        <a href="/about" class="nav-link">About</a>
+        <a href="/contact" class="nav-link">Contact</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="contact-header">
+    <h1>Start a Project</h1>
+    <p>Tell me about your vision. Every inquiry receives a thoughtful response within 48 hours.</p>
+  </header>
+
+  <main class="contact-main">
+    <form id="contact-form" class="contact-form">
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="clientName">Client Name</label>
+          <input type="text" id="clientName" name="clientName" placeholder="Your full name">
+        </div>
+        <div class="form-group">
+          <label for="companyName">Company / Brand</label>
+          <input type="text" id="companyName" name="companyName" placeholder="Company or studio name">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" placeholder="you@company.com">
+      </div>
+
+        <div class="form-group">
+          <label>Project Budget</label>
+          <div class="btn-matrix" id="budget-matrix">
+            <button type="button" class="matrix-btn" data-value="2k-5k">$200 &ndash; $2,000</button>
+            <button type="button" class="matrix-btn" data-value="5k-10k">$3,000 &ndash; $10,000</button>
+            <button type="button" class="matrix-btn" data-value="10k+">$10,000+</button>
+          </div>
+          <input type="hidden" name="budgetRange" id="budget-input">
+        </div>
+
+        <div class="form-group">
+          <label>Timeline</label>
+          <div class="btn-matrix" id="timeline-matrix">
+            <button type="button" class="matrix-btn" data-value="urgent">Under 1 Month</button>
+            <button type="button" class="matrix-btn" data-value="standard">1&ndash;3 Months</button>
+            <button type="button" class="matrix-btn" data-value="flexible">3+ Months</button>
+          </div>
+          <input type="hidden" name="timelineUrgency" id="timeline-input">
+        </div>
+
+        <div class="form-group">
+          <label for="projectBrief">Project Brief</label>
+          <textarea id="projectBrief" name="projectBrief" rows="5" placeholder="Describe your project, goals, and any creative direction&hellip;"></textarea>
+        </div>
+
+      <div class="form-group">
+        <label for="briefFile">Creative Brief <span class="optional">(optional)</span></label>
+        <div class="file-zone">
+          <input type="file" id="briefFile" name="briefFile" accept=".pdf,.doc,.docx,.txt,.md">
+          <span class="file-label">Upload a brief document (PDF, DOC, or TXT)</span>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary btn-submit">Send Inquiry</button>
+      <div id="contact-status" class="status-msg"></div>
+    </form>
+  </main>
+
+  <footer class="contact-footer">
+    <div class="contact-social">
+      <a href="https://behance.net/" target="_blank" rel="noopener" class="social-link">Behance</a>
+      <a href="https://vimeo.com/" target="_blank" rel="noopener" class="social-link">Vimeo</a>
+      <a href="https://linkedin.com/" target="_blank" rel="noopener" class="social-link">LinkedIn</a>
+      <a href="https://instagram.com/muh_kamalldeen_u" target="_blank" rel="noopener" class="social-link">Instagram</a>
+    </div>
+    <p>&copy; 2026 Kamal Usman</p>
+  </footer>
+
+  <script src="/js/contact.js"></script>
+</body>
+</html>
