@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
+const connectDB = require('../db');
 const Inquiry = require('../models/Inquiry');
 
 const sessions = new Map();
@@ -57,8 +58,14 @@ router.get('/inquiries', async (req, res) => {
   if (!token || !sessions.has(token)) {
     return res.status(401).json({ message: 'Not authenticated' });
   }
-  const inquiries = await Inquiry.find().sort({ submissionDate: -1 });
-  res.json(inquiries);
+  try {
+    await connectDB();
+    const inquiries = await Inquiry.find().sort({ submissionDate: -1 });
+    res.json(inquiries);
+  } catch (error) {
+    console.error("💥 Inquiries route error:", error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 module.exports = router;

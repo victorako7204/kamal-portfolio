@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
+const connectDB = require('../db');
 const Inquiry = require('../models/Inquiry');
 
 const briefStorage = multer.diskStorage({
@@ -21,20 +22,27 @@ const uploadBrief = multer({
 });
 
 router.post('/', uploadBrief.single('briefFile'), async (req, res) => {
-  const data = {
-    clientName: (req.body.clientName || '').trim(),
-    companyName: (req.body.companyName || '').trim(),
-    email: (req.body.email || '').trim(),
-    projectBrief: (req.body.projectBrief || '').trim(),
-    budgetRange: (req.body.budgetRange || '').trim(),
-    timelineUrgency: (req.body.timelineUrgency || '').trim(),
-    briefFile: req.file ? '/uploads/briefs/' + req.file.filename : '',
-  };
+  try {
+    await connectDB();
 
-  const inquiry = new Inquiry(data);
-  await inquiry.save();
+    const data = {
+      clientName: (req.body.clientName || '').trim(),
+      companyName: (req.body.companyName || '').trim(),
+      email: (req.body.email || '').trim(),
+      projectBrief: (req.body.projectBrief || '').trim(),
+      budgetRange: (req.body.budgetRange || '').trim(),
+      timelineUrgency: (req.body.timelineUrgency || '').trim(),
+      briefFile: req.file ? '/uploads/briefs/' + req.file.filename : '',
+    };
 
-  res.status(201).json({ message: 'Inquiry submitted successfully' });
+    const inquiry = new Inquiry(data);
+    await inquiry.save();
+
+    res.status(201).json({ message: 'Inquiry submitted successfully' });
+  } catch (error) {
+    console.error("💥 Contact route error:", error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 module.exports = router;

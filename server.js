@@ -1,9 +1,9 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const cookieParser = require('cookie-parser');
+const connectDB = require('./db');
 const galleryRoutes = require('./routes/gallery');
 const uploadRoutes = require('./routes/upload');
 const contactRoutes = require('./routes/contact');
@@ -47,15 +47,15 @@ app.get('/{*path}', (req, res) => {
 module.exports = app;
 
 if (process.env.VERCEL !== '1') {
-  mongoose.connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log('Connected to MongoDB');
-    app.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
+  connectDB()
+    .then(() => {
+      console.log('Connected to MongoDB');
+      app.listen(PORT, () => {
+        console.log(`Server running on http://localhost:${PORT}`);
+      });
+    })
+    .catch((err) => {
+      console.error('MongoDB connection error:', err.message);
+      process.exit(1);
     });
-  })
-  .catch((err) => {
-    console.error('MongoDB connection error:', err.message);
-    process.exit(1);
-  });
 }

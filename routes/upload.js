@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
+const connectDB = require('../db');
 const Media = require('../models/Media');
 
 const storage = multer.diskStorage({
@@ -51,6 +52,8 @@ router.post('/', (req, res, next) => {
   console.log("File Metadata:", req.file || req.files);
 
   try {
+    await connectDB();
+
     const imageTypes = ['jpeg', 'jpg', 'png', 'gif', 'webp', 'bmp', 'svg'];
     const ext = path.extname(req.file.originalname).toLowerCase().slice(1);
     const fileType = imageTypes.includes(ext) ? 'image' : 'video';
@@ -82,15 +85,21 @@ router.post('/', (req, res, next) => {
 });
 
 router.delete('/:id', async (req, res) => {
-  const media = await Media.findByIdAndUpdate(
-    req.params.id,
-    { isDeleted: true, deletedAt: new Date() },
-    { new: true }
-  );
-  if (!media) {
-    return res.status(404).json({ message: 'Media not found' });
+  try {
+    await connectDB();
+    const media = await Media.findByIdAndUpdate(
+      req.params.id,
+      { isDeleted: true, deletedAt: new Date() },
+      { new: true }
+    );
+    if (!media) {
+      return res.status(404).json({ message: 'Media not found' });
+    }
+    res.json({ message: 'Deleted successfully' });
+  } catch (error) {
+    console.error("💥 Upload DELETE route error:", error.message);
+    res.status(500).json({ success: false, error: error.message });
   }
-  res.json({ message: 'Deleted successfully' });
 });
 
 module.exports = router;
