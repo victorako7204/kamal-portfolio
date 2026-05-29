@@ -3,6 +3,7 @@ const router = express.Router();
 const cloudinary = require('cloudinary').v2;
 const connectDB = require('../db');
 const Media = require('../models/Media');
+const { requireAuth } = require('../middleware/auth');
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -15,7 +16,7 @@ console.log("📡 Cloudinary Config Status:", {
   keyLength: cloudinary.config().api_key ? cloudinary.config().api_key.length : 0,
 });
 
-router.get('/signature', (req, res) => {
+router.get('/signature', requireAuth, (req, res) => {
   try {
     const timestamp = Math.round(new Date().getTime() / 1000);
     const signature = cloudinary.utils.api_sign_request(
@@ -35,7 +36,7 @@ router.get('/signature', (req, res) => {
   }
 });
 
-router.post('/', async (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
   try {
     await connectDB();
 
@@ -79,7 +80,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireAuth, async (req, res) => {
   try {
     await connectDB();
     const media = await Media.findByIdAndUpdate(

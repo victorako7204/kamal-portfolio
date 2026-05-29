@@ -1,14 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const crypto = require('crypto');
 const connectDB = require('../db');
 const Inquiry = require('../models/Inquiry');
-
-const sessions = new Map();
-
-function generateToken() {
-  return crypto.randomBytes(48).toString('hex');
-}
+const { sessions, generateToken, requireAuth } = require('../middleware/auth');
 
 router.post('/login', (req, res) => {
   const { username, password } = req.body || {};
@@ -47,19 +41,11 @@ router.post('/logout', (req, res) => {
   res.json({ message: 'Logged out' });
 });
 
-router.get('/me', (req, res) => {
-  const token = req.cookies && req.cookies.session;
-  if (!token || !sessions.has(token)) {
-    return res.status(401).json({ message: 'Not authenticated' });
-  }
+router.get('/me', requireAuth, (req, res) => {
   res.json({ authenticated: true });
 });
 
-router.get('/inquiries', async (req, res) => {
-  const token = req.cookies && req.cookies.session;
-  if (!token || !sessions.has(token)) {
-    return res.status(401).json({ message: 'Not authenticated' });
-  }
+router.get('/inquiries', requireAuth, async (req, res) => {
   try {
     await connectDB();
     const inquiries = await Inquiry.find({}, { briefData: 0 }).sort({ submissionDate: -1 });

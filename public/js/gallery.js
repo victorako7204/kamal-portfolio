@@ -70,6 +70,14 @@
     return url ? url.replace(/\/upload\//, '/upload/f_auto,q_auto/') : url;
   }
 
+  function animateCards(selector) {
+    if (typeof gsap === 'undefined') return;
+    gsap.fromTo(selector,
+      { opacity: 0, y: 40 },
+      { opacity: 1, y: 0, duration: 0.6, stagger: 0.1, ease: 'power3.out' }
+    );
+  }
+
   /* ---- Load & render gallery ---- */
   async function loadGallery() {
     try {
@@ -77,7 +85,9 @@
       allMedia = await res.json();
       renderMotion(allMedia.filter(m => m.category === 'motion'));
       renderGraphic(allMedia.filter(m => m.category === 'graphic'));
-    } catch {
+      animateCards('.video-card');
+      animateCards('.masonry-item');
+    } catch (err) {
       motionGrid.innerHTML = '<p class="empty-msg">Failed to load gallery.</p>';
       graphicGrid.innerHTML = '<p class="empty-msg">Failed to load gallery.</p>';
     }
