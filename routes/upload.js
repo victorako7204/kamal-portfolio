@@ -33,27 +33,52 @@ const upload = multer({
   limits: { fileSize: 100 * 1024 * 1024 },
 });
 
-router.post('/', upload.single('asset'), async (req, res) => {
-  if (!req.file) {
+router.post('/', (req, res, next) => {
+  console.log("================ BACKEND INCOMING REQUEST ================");
+  console.log("Method:", req.method);
+  console.log("URL:", req.url);
+  console.log("Content-Length (Bytes):", req.headers['content-length']);
+  console.log("Content-Type:", req.headers['content-type']);
+  console.log("==========================================================");
+  next();
+}, upload.single('asset'), async (req, res) => {
+  if (!req.file && !req.files) {
+    console.error("❌ BACKEND FAILURE: Request reached the route, but no binary files were detected or parsed by the middleware.");
     return res.status(400).json({ message: 'No file uploaded' });
   }
 
-  const imageTypes = ['jpeg', 'jpg', 'png', 'gif', 'webp', 'bmp', 'svg'];
-  const ext = path.extname(req.file.originalname).toLowerCase().slice(1);
-  const fileType = imageTypes.includes(ext) ? 'image' : 'video';
+  console.log("✅ BACKEND SUCCESS: File successfully parsed on the server.");
+  console.log("File Metadata:", req.file || req.files);
 
-  const assetUrl = '/uploads/' + req.file.filename;
+  try {
+    const imageTypes = ['jpeg', 'jpg', 'png', 'gif', 'webp', 'bmp', 'svg'];
+    const ext = path.extname(req.file.originalname).toLowerCase().slice(1);
+    const fileType = imageTypes.includes(ext) ? 'image' : 'video';
 
-  const media = new Media({
-    title: req.body.title,
-    description: req.body.description || '',
-    category: req.body.category,
-    fileType,
-    assetUrl,
-  });
+    const assetUrl = '/uploads/' + req.file.filename;
 
-  const saved = await media.save();
-  res.status(201).json(saved);
+    console.log("💾 ATTEMPTING MONGODB PERSISTENCE...");
+    console.log("Target Payload Category:", req.body.category);
+    console.log("Target Payload Title:", req.body.title);
+
+    const media = new Media({
+      title: req.body.title,
+      description: req.body.description || '',
+      category: req.body.category,
+      fileType,
+      assetUrl,
+    });
+
+    const saved = await media.save();
+    res.status(201).json(saved);
+  } catch (error) {
+    console.error("💥 CRITICAL BACKEND ERROR PATHWAY:", error.message);
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+      stack: process.env.NODE_ENV !== 'production' ? error.stack : undefined
+    });
+  }
 });
 
 router.delete('/:id', async (req, res) => {
