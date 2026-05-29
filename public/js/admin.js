@@ -113,6 +113,16 @@
 
   uploadForm.addEventListener('submit', function (e) {
     e.preventDefault();
+
+    var fileInput = document.getElementById('asset');
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+      var maxBytes = 4.5 * 1024 * 1024;
+      if (fileInput.files[0].size > maxBytes) {
+        showUploadStatus('Asset size exceeds 4.5MB serverless limitation. Please optimize the image/video compression before uploading.', 'file-error');
+        return;
+      }
+    }
+
     var btn = uploadForm.querySelector('.btn-primary');
     btn.disabled = true;
     btn.textContent = 'Uploading...';

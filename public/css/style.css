@@ -1440,6 +1440,17 @@ body.about-page {
   border: 1px solid rgba(248, 113, 113, 0.15);
 }
 
+.status-msg.file-error {
+  display: block;
+  background: rgba(255, 70, 70, 0.15);
+  color: #ff6b6b;
+  border: 2px solid #ff6b6b;
+  font-weight: 600;
+  padding: 14px 18px;
+  border-radius: var(--radius-sm);
+  animation: fadeIn 300ms var(--ease);
+}
+
 .empty-msg {
   text-align: center;
   padding: 48px 24px;
