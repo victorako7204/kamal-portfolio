@@ -114,7 +114,7 @@
 
   function deleteMedia(id) {
     if (!confirm('Soft-delete this item? It will be permanently removed after 5 days.')) return;
-    fetch('/api/upload/' + id, { method: 'DELETE' })
+    fetch('/api/upload/' + id, { method: 'DELETE', credentials: 'include' })
       .then(function (r) { if (r.ok) loadMedia(); else showUploadStatus('Failed to delete.', 'error'); })
       .catch(function () { showUploadStatus('Failed to delete.', 'error'); });
   }
@@ -136,6 +136,7 @@
   function postToServer(payload) {
     return fetch('/api/upload', {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     }).then(function (r) {
@@ -145,30 +146,34 @@
   }
 
   function uploadToCloudinary(file) {
-    return fetch('/api/upload/signature')
-      .then(function (r) { return r.json(); })
-      .then(function (sig) {
-        var targetCloud = sig.cloudName;
+    return fetch('/api/upload/signature', { credentials: 'include' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('Signature request failed: ' + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        var cloudName = data.cloudName || 'dijpupljz';
+        var apiKey = data.apiKey || '416492239689254';
+        var signature = data.signature;
+        var timestamp = data.timestamp;
 
-        console.log("🚀 SUBMITTING TO CLOUDINARY TARGET URL:", 'https://api.cloudinary.com/v1_1/' + targetCloud + '/auto/upload');
-        console.log("📡 Cloud Name from backend:", targetCloud);
-        console.log("🔑 API Key from backend:", sig.apiKey ? 'Present (length: ' + sig.apiKey.length + ')' : 'MISSING');
+        console.log("🚀 INTERCEPTED TARGET URL:", 'https://api.cloudinary.com/v1_1/' + cloudName + '/auto/upload');
 
-        if (!targetCloud || targetCloud === 'undefined' || targetCloud === 'null') {
+        if (!cloudName || cloudName === 'undefined' || cloudName === 'null') {
           console.error("❌ CRITICAL: The cloud name variable evaluated to a literal undefined string.");
-          throw new Error('Cloud name is missing from server configuration. Check CLOUDINARY_CLOUD_NAME environment variable.');
+          throw new Error('Cloud name is missing from server configuration.');
         }
 
-        var fd = new FormData();
-        fd.append('file', file);
-        fd.append('api_key', sig.apiKey);
-        fd.append('timestamp', sig.timestamp);
-        fd.append('signature', sig.signature);
-        if (sig.uploadPreset) fd.append('upload_preset', sig.uploadPreset);
+        var formData = new FormData();
+        formData.append('file', file);
+        formData.append('api_key', apiKey);
+        formData.append('timestamp', timestamp);
+        formData.append('signature', signature);
+        if (data.uploadPreset) formData.append('upload_preset', data.uploadPreset);
 
-        return fetch('https://api.cloudinary.com/v1_1/' + targetCloud + '/auto/upload', {
+        return fetch('https://api.cloudinary.com/v1_1/' + cloudName + '/auto/upload', {
           method: 'POST',
-          body: fd,
+          body: formData,
         });
       })
       .then(function (r) {
@@ -243,7 +248,7 @@
   });
 
   function loadInquiries() {
-    fetch('/api/admin/inquiries')
+    fetch('/api/admin/inquiries', { credentials: 'include' })
       .then(function (r) {
         if (!r.ok) throw new Error('Unauthorized');
         return r.json();

@@ -19,6 +19,8 @@ console.log("===============================================");
 
 router.get('/signature', requireAuth, (req, res) => {
   try {
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+
     const timestamp = Math.round(new Date().getTime() / 1000);
     const signature = cloudinary.utils.api_sign_request(
       { timestamp },
