@@ -19,25 +19,10 @@ const mediaSchema = new mongoose.Schema({
       message: 'Category must be either "motion" or "graphic"',
     },
   },
-  fileType: {
+  mediaUrl: {
     type: String,
-    required: true,
-    enum: {
-      values: ['video', 'image'],
-      message: 'fileType must be either "video" or "image"',
-    },
-  },
-  assetUrl: {
-    type: String,
-    required: [true, 'Asset URL is required'],
-  },
-  assetData: {
-    type: Buffer,
-    required: true,
-  },
-  assetMimeType: {
-    type: String,
-    required: true,
+    required: [true, 'Media URL is required'],
+    trim: true,
   },
   isDeleted: {
     type: Boolean,

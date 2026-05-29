@@ -86,15 +86,15 @@
       return;
     }
     mediaTbody.innerHTML = items.map(function (item) {
+      var isMotion = item.category === 'motion';
+      var previewHtml = isMotion
+        ? '<div class="table-preview video-preview" style="background:#111;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.7rem">Motion</div>'
+        : '<img src="' + item.mediaUrl + '" alt="" style="width:56px;height:40px;object-fit:cover">';
       return '<tr>' +
-        '<td><div class="table-preview ' + (item.fileType === 'video' ? 'video-preview' : '') + '">' +
-          (item.fileType === 'video'
-            ? '<video src="' + item.assetUrl + '" muted preload="metadata"></video>'
-            : '<img src="' + item.assetUrl + '" alt="">') +
-        '</div></td>' +
+        '<td>' + previewHtml + '</td>' +
         '<td>' + esc(item.title) + '</td>' +
         '<td><span class="category-badge ' + item.category + '">' + (item.category === 'motion' ? 'Motion Graphics' : 'Graphic Design') + '</span></td>' +
-        '<td>' + item.fileType + '</td>' +
+        '<td>' + (isMotion ? 'video' : 'image') + '</td>' +
         '<td><button class="btn-delete" data-id="' + item._id + '">Delete</button></td>' +
       '</tr>';
     }).join('');
@@ -114,28 +114,28 @@
   uploadForm.addEventListener('submit', function (e) {
     e.preventDefault();
 
-    var fileInput = document.getElementById('asset');
-    if (fileInput && fileInput.files && fileInput.files[0]) {
-      var maxBytes = 4.5 * 1024 * 1024;
-      if (fileInput.files[0].size > maxBytes) {
-        showUploadStatus('Asset size exceeds 4.5MB serverless limitation. Please optimize the image/video compression before uploading.', 'file-error');
-        return;
-      }
-    }
-
     var btn = uploadForm.querySelector('.btn-primary');
     btn.disabled = true;
-    btn.textContent = 'Uploading...';
+    btn.textContent = 'Publishing...';
     uploadStatus.className = 'status-msg';
     uploadStatus.style.display = 'none';
 
-    var fd = new FormData(uploadForm);
+    var data = JSON.stringify({
+      title: document.getElementById('title').value,
+      description: document.getElementById('description').value,
+      category: document.getElementById('category').value,
+      mediaUrl: document.getElementById('mediaUrl').value,
+    });
 
-    fetch('/api/upload', { method: 'POST', body: fd })
+    fetch('/api/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: data,
+    })
       .then(function (r) {
-        if (!r.ok) return r.json().then(function (e) { throw new Error(e.message || 'Upload failed'); });
+        if (!r.ok) return r.json().then(function (e) { throw new Error(e.error || 'Upload failed'); });
         uploadForm.reset();
-        showUploadStatus('Uploaded successfully!', 'success');
+        showUploadStatus('Published successfully!', 'success');
         loadMedia();
       })
       .catch(function (err) { showUploadStatus(err.message, 'error'); })

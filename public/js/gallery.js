@@ -7,7 +7,7 @@
   const graphicGrid = document.getElementById('graphic-grid');
 
   const videoModal = document.getElementById('video-modal');
-  const modalVideo = document.getElementById('modal-video');
+  const modalPlayer = document.getElementById('modal-player');
   const modalTitle = document.getElementById('modal-title');
   const modalDesc = document.getElementById('modal-desc');
 
@@ -42,8 +42,7 @@
   /* ---- Modal controls ---- */
   function closeModal(modal) {
     modal.classList.remove('open');
-    const vid = modal.querySelector('video');
-    if (vid) vid.pause();
+    modalPlayer.innerHTML = '';
   }
 
   document.querySelectorAll('.modal-close').forEach(btn => {
@@ -74,33 +73,37 @@
     }
   }
 
+  function getEmbedUrl(url) {
+    var ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    if (ytMatch) return 'https://www.youtube.com/embed/' + ytMatch[1] + '?autoplay=1&rel=0';
+
+    var vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+    if (vimeoMatch) return 'https://player.vimeo.com/video/' + vimeoMatch[1] + '?autoplay=1';
+
+    return null;
+  }
+
   function renderMotion(items) {
     if (!items.length) {
       motionGrid.innerHTML = '<p class="empty-msg">New collection dropping soon</p>';
       return;
     }
-    motionGrid.innerHTML = items.map(item => `
-      <div class="video-card" data-id="${item._id}">
-        <div class="video-wrapper">
-          <video
-            src="${item.assetUrl}"
-            muted
-            loop
-            preload="metadata"
-          ></video>
-        </div>
-        <div class="card-body">
-          <h3>${escapeHtml(item.title)}</h3>
-          ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}
-        </div>
-      </div>
-    `).join('');
+    motionGrid.innerHTML = items.map(item => {
+      var embed = getEmbedUrl(item.mediaUrl);
+      var playerHtml = embed
+        ? '<iframe src="' + embed + '" frameborder="0" allow="autoplay; fullscreen" allowfullscreen style="width:100%;aspect-ratio:16/9;display:block"></iframe>'
+        : '<video src="' + item.mediaUrl + '" muted loop preload="metadata" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:#000"></video>';
+      return '<div class="video-card" data-id="' + item._id + '">' +
+        '<div class="video-wrapper">' + playerHtml + '</div>' +
+        '<div class="card-body">' +
+          '<h3>' + escapeHtml(item.title) + '</h3>' +
+          (item.description ? '<p>' + escapeHtml(item.description) + '</p>' : '') +
+        '</div>' +
+      '</div>';
+    }).join('');
 
-    motionGrid.querySelectorAll('.video-card video').forEach(vid => {
-      const card = vid.closest('.video-card');
-      card.addEventListener('mouseenter', () => vid.play().catch(() => {}));
-      card.addEventListener('mouseleave', () => { vid.pause(); vid.currentTime = 0; });
-      card.addEventListener('click', () => openVideoModal(card.dataset.id));
+    motionGrid.querySelectorAll('.video-card').forEach(function (card) {
+      card.addEventListener('click', function () { openVideoModal(card.dataset.id); });
     });
   }
 
@@ -111,7 +114,7 @@
     }
     graphicGrid.innerHTML = items.map(item => `
       <div class="masonry-item" data-id="${item._id}">
-        <img src="${item.assetUrl}" alt="${escapeHtml(item.title)}" loading="lazy">
+        <img src="${item.mediaUrl}" alt="${escapeHtml(item.title)}" loading="lazy">
         <div class="card-body">
           <h3>${escapeHtml(item.title)}</h3>
           ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}
@@ -127,7 +130,12 @@
   function openVideoModal(id) {
     const item = allMedia.find(m => m._id === id);
     if (!item) return;
-    modalVideo.src = item.assetUrl;
+    var embed = getEmbedUrl(item.mediaUrl);
+    if (embed) {
+      modalPlayer.innerHTML = '<iframe src="' + embed + '" frameborder="0" allow="autoplay; fullscreen" allowfullscreen style="width:100%;aspect-ratio:16/9;display:block;background:#000"></iframe>';
+    } else {
+      modalPlayer.innerHTML = '<video src="' + item.mediaUrl + '" controls autoplay style="width:100%;max-height:68vh;display:block;background:#000"></video>';
+    }
     modalTitle.textContent = item.title;
     modalDesc.textContent = item.description || '';
     videoModal.classList.add('open');
@@ -136,7 +144,7 @@
   function openLightbox(id) {
     const item = allMedia.find(m => m._id === id);
     if (!item) return;
-    lightboxImg.src = item.assetUrl;
+    lightboxImg.src = item.mediaUrl;
     lightboxImg.alt = item.title;
     lightboxTitle.textContent = item.title;
     lightboxDesc.textContent = item.description || '';
