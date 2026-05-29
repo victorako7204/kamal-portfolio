@@ -1,37 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const path = require('path');
 const connectDB = require('../db');
 const Media = require('../models/Media');
+const Inquiry = require('../models/Inquiry');
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '..', 'uploads'));
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, uniqueSuffix + ext);
-  },
-});
-
-const fileFilter = (req, file, cb) => {
-  const imageTypes = /jpeg|jpg|png|gif|webp|bmp|svg/;
-  const videoTypes = /mp4|webm|ogg|mov|avi|mkv/;
-  const ext = path.extname(file.originalname).toLowerCase().slice(1);
-
-  if (imageTypes.test(ext) || videoTypes.test(ext)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Only image and video files are allowed'), false);
-  }
-};
-
+const storage = multer.memoryStorage();
 const upload = multer({
   storage,
-  fileFilter,
-  limits: { fileSize: 100 * 1024 * 1024 },
+  limits: { fileSize: 4.5 * 1024 * 1024 },
 });
 
 router.post('/', (req, res, next) => {
@@ -54,11 +31,8 @@ router.post('/', (req, res, next) => {
   try {
     await connectDB();
 
-    const imageTypes = ['jpeg', 'jpg', 'png', 'gif', 'webp', 'bmp', 'svg'];
-    const ext = path.extname(req.file.originalname).toLowerCase().slice(1);
-    const fileType = imageTypes.includes(ext) ? 'image' : 'video';
-
-    const assetUrl = '/uploads/' + req.file.filename;
+    const imageMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/svg+xml'];
+    const fileType = imageMimeTypes.includes(req.file.mimetype) ? 'image' : 'video';
 
     console.log("💾 ATTEMPTING MONGODB PERSISTENCE...");
     console.log("Target Payload Category:", req.body.category);
@@ -69,11 +43,23 @@ router.post('/', (req, res, next) => {
       description: req.body.description || '',
       category: req.body.category,
       fileType,
-      assetUrl,
+      assetUrl: '', // placeholder, updated after save
+      assetData: req.file.buffer,
+      assetMimeType: req.file.mimetype,
     });
 
     const saved = await media.save();
-    res.status(201).json(saved);
+    saved.assetUrl = '/api/uploads/media/' + saved._id;
+    await saved.save();
+
+    res.status(201).json({
+      _id: saved._id,
+      title: saved.title,
+      description: saved.description,
+      category: saved.category,
+      fileType: saved.fileType,
+      assetUrl: saved.assetUrl,
+    });
   } catch (error) {
     console.error("💥 CRITICAL BACKEND ERROR PATHWAY:", error.message);
     return res.status(500).json({
@@ -81,6 +67,38 @@ router.post('/', (req, res, next) => {
       error: error.message,
       stack: process.env.NODE_ENV !== 'production' ? error.stack : undefined
     });
+  }
+});
+
+router.get('/media/:id', async (req, res) => {
+  try {
+    await connectDB();
+    const media = await Media.findById(req.params.id);
+    if (!media || !media.assetData) {
+      return res.status(404).json({ message: 'Media not found' });
+    }
+    res.set('Content-Type', media.assetMimeType);
+    res.set('Cache-Control', 'public, max-age=31536000, immutable');
+    res.send(media.assetData);
+  } catch (error) {
+    console.error("💥 Media serve error:", error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/brief/:id', async (req, res) => {
+  try {
+    await connectDB();
+    const inquiry = await Inquiry.findById(req.params.id);
+    if (!inquiry || !inquiry.briefData) {
+      return res.status(404).json({ message: 'Brief not found' });
+    }
+    res.set('Content-Type', inquiry.briefMimeType);
+    res.set('Content-Disposition', 'inline; filename="' + inquiry.briefFileName + '"');
+    res.send(inquiry.briefData);
+  } catch (error) {
+    console.error("💥 Brief serve error:", error.message);
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 

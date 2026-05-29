@@ -31,6 +31,14 @@ const mediaSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Asset URL is required'],
   },
+  assetData: {
+    type: Buffer,
+    required: true,
+  },
+  assetMimeType: {
+    type: String,
+    required: true,
+  },
   isDeleted: {
     type: Boolean,
     default: false,

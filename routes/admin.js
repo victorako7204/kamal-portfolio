@@ -26,9 +26,11 @@ router.post('/login', (req, res) => {
   const token = generateToken();
   sessions.set(token, { createdAt: Date.now() });
 
+  const isVercel = process.env.VERCEL === '1';
   res.cookie('session', token, {
     httpOnly: true,
-    sameSite: 'lax',
+    secure: isVercel,
+    sameSite: isVercel ? 'none' : 'lax',
     path: '/',
     maxAge: 24 * 60 * 60 * 1000,
   });
@@ -60,7 +62,7 @@ router.get('/inquiries', async (req, res) => {
   }
   try {
     await connectDB();
-    const inquiries = await Inquiry.find().sort({ submissionDate: -1 });
+    const inquiries = await Inquiry.find({}, { briefData: 0 }).sort({ submissionDate: -1 });
     res.json(inquiries);
   } catch (error) {
     console.error("💥 Inquiries route error:", error.message);

@@ -1,42 +1,36 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const path = require('path');
 const connectDB = require('../db');
 const Inquiry = require('../models/Inquiry');
 
-const briefStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '..', 'uploads', 'briefs'));
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, uniqueSuffix + ext);
-  },
-});
-
 const uploadBrief = multer({
-  storage: briefStorage,
-  limits: { fileSize: 20 * 1024 * 1024 },
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 4.5 * 1024 * 1024 },
 });
 
 router.post('/', uploadBrief.single('briefFile'), async (req, res) => {
   try {
     await connectDB();
 
-    const data = {
+    const inquiry = new Inquiry({
       clientName: (req.body.clientName || '').trim(),
       companyName: (req.body.companyName || '').trim(),
       email: (req.body.email || '').trim(),
       projectBrief: (req.body.projectBrief || '').trim(),
       budgetRange: (req.body.budgetRange || '').trim(),
       timelineUrgency: (req.body.timelineUrgency || '').trim(),
-      briefFile: req.file ? '/uploads/briefs/' + req.file.filename : '',
-    };
+      briefFile: '',
+      briefData: req.file ? req.file.buffer : null,
+      briefMimeType: req.file ? req.file.mimetype : '',
+      briefFileName: req.file ? req.file.originalname : '',
+    });
 
-    const inquiry = new Inquiry(data);
-    await inquiry.save();
+    const saved = await inquiry.save();
+    if (req.file) {
+      saved.briefFile = '/api/uploads/brief/' + saved._id;
+      await saved.save();
+    }
 
     res.status(201).json({ message: 'Inquiry submitted successfully' });
   } catch (error) {

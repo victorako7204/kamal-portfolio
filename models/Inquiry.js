@@ -29,6 +29,18 @@ const inquirySchema = new mongoose.Schema({
     type: String,
     default: '',
   },
+  briefData: {
+    type: Buffer,
+    default: null,
+  },
+  briefMimeType: {
+    type: String,
+    default: '',
+  },
+  briefFileName: {
+    type: String,
+    default: '',
+  },
   submissionDate: {
     type: Date,
     default: Date.now,
